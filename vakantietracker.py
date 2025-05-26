@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import os
 
 st.set_page_config(page_title="Vakantie Budget Tracker", layout="wide")
 
-st.title("🏖️ Vakantie Budget Tracker")
+st.title("\U0001F3D6️ Vakantie Budget Tracker")
 
 # Invoer vakantie-instellingen
 with st.sidebar:
@@ -12,6 +13,11 @@ with st.sidebar:
     start_datum = st.date_input("Startdatum", datetime.date.today())
     aantal_dagen = st.number_input("Aantal dagen", min_value=1, max_value=365, value=14)
     dagbudget = st.number_input("Dagbudget (€)", min_value=0.0, value=100.0, step=1.0)
+
+# Laad eerder opgeslagen uitgaven indien aanwezig
+csv_file = "vakantie_uitgaven.csv"
+if os.path.exists(csv_file):
+    st.session_state.uitgaven = pd.read_csv(csv_file).to_dict(orient="records")
 
 # Session state voor uitgaven
 if "uitgaven" not in st.session_state:
@@ -33,15 +39,17 @@ with col5:
     activiteiten = st.number_input("Activiteiten", min_value=0.0, step=1.0)
 
 if st.button("➕ Toevoegen"):
-    st.session_state.uitgaven.append({
+    nieuwe_uitgave = {
         "Datum": datum,
         "Hotel": hotel,
         "Eten": eten,
         "Transport": transport,
         "Activiteiten": activiteiten,
         "Totaal": hotel + eten + transport + activiteiten
-    })
-    st.success("Uitgave toegevoegd!")
+    }
+    st.session_state.uitgaven.append(nieuwe_uitgave)
+    pd.DataFrame(st.session_state.uitgaven).to_csv(csv_file, index=False)
+    st.success("Uitgave toegevoegd en opgeslagen!")
 
 # Toon tabel
 if st.session_state.uitgaven:
